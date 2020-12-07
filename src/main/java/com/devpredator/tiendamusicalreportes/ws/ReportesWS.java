@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.devpredator.tiendamusicalreportes.services.DropboxAPIService;
+import com.devpredator.tiendamusicalreportes.services.MailService;
 import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.v2.DbxClientV2;
 
@@ -36,6 +37,11 @@ public class ReportesWS {
 	 */
 	@Autowired
 	private DropboxAPIService dropboxAPIServiceImpl;
+	/**
+	 * SE INYECTA EL SERVICIO DE NOTIFICACION DE CORREOS CON SPRING.
+	 */
+	@Autowired
+	private MailService mailServiceImpl;
 	
 	@GET
 	@Path("/pruebaWS")
@@ -46,13 +52,15 @@ public class ReportesWS {
 	@POST
 	@Path("/generarReporte")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	public Response generarReporte(@FormParam("orderID") String orderID, @FormParam("cliente") String cliente, @FormParam("destinatario") String destinario) {
+	public Response generarReporte(@FormParam("orderID") String orderID, @FormParam("cliente") String cliente, @FormParam("destinatario") String destinatario) {
 		
 		DbxRequestConfig dbxRequestConfig = DbxRequestConfig.newBuilder("dropbox/devpredator").build();
 		DbxClientV2 dbxClientV2 = new DbxClientV2(dbxRequestConfig, ACCESS_TOKEN);
 		
 		Response response = this.dropboxAPIServiceImpl.descargarReporte(dbxClientV2, orderID, cliente);
 		
+		Response responseEmail = this.mailServiceImpl.enviarEmail(dbxClientV2, destinatario, cliente, orderID);
+				
 		return response;
 	}
 }
